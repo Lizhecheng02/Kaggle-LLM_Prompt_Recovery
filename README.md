@@ -16,3 +16,10 @@ pip install -r requirements.txt
 export KAGGLE_USERNAME="your_kaggle_username"
 export KAGGLE_KEY="your_api_key"
 ```
+
+#### 2. Download Dataset
+```bash
+cd datasets
+kaggle datasets download -d xuanmingzhang777/gemini-dataset-3-8-k
+unzip gemini-dataset-3-8-k.zip
+```
