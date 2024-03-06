@@ -40,7 +40,10 @@ lora_config = LoraConfig(
     bias="none",
     task_type="CAUSAL_LM"
 )
-model = get_peft_model(model, lora_config)
+lora_model = get_peft_model(model, lora_config)
+
+trainable, total = lora_model.get_nb_trainable_parameters()
+print(f"Trainable: {trainable} | total: {total} | Percentage: {trainable / total * 100: .4f}%")
 
 df = pd.read_csv("datasets/train.csv")
 df = df.sample(frac=1, random_state=42)
@@ -96,6 +99,9 @@ scheduler = get_polynomial_decay_schedule_with_warmup(
     lr_end=3e-6
 )
 
+tokenizer.pad_token = tokenizer.eos_token
+torch.cuda.empty_cache()
+
 trainer = SFTTrainer(
     model=model,
     tokenizer=tokenizer,
@@ -105,8 +111,13 @@ trainer = SFTTrainer(
     packing=False,
     neftune_noise_alpha=2.5,
     formatting_func=formatting_prompts_func,
+    peft_config=lora_config,
     dataset_num_proc=2,
     dataset_batch_size=100,
     optimizers=(optimizer, scheduler),
     args=args
 )
+
+trainer.train()
+new_model = "finetuned-gemma-7b"
+trainer.model.save_pretrained(new_model)
