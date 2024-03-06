@@ -8,7 +8,7 @@ from transformers import (
     get_polynomial_decay_schedule_with_warmup
 )
 from peft import LoraConfig, PeftModel, prepare_model_for_kbit_training, get_peft_model
-from trl import SFTTrainer, DataCollatorForLanguageModeling
+from trl import SFTTrainer
 from datasets import Dataset
 
 bnb_config = BitsAndBytesConfig(
@@ -25,6 +25,8 @@ tokenizer = AutoTokenizer.from_pretrained(
     model_id,
     token=access_token
 )
+tokenizer.padding_side = "right"
+
 model = AutoModelForCausalLM.from_pretrained(
     model_id,
     quantization_config=bnb_config,
@@ -86,7 +88,6 @@ def formatting_prompts_func(example):
 
 args = TrainingArguments(
     output_dir=f"outputs",
-    fp16=True,
     gradient_accumulation_steps=8,
     logging_steps=100,
     num_train_epochs=3,

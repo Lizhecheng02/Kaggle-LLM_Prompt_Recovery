@@ -53,7 +53,16 @@ trainable, total = lora_model.get_nb_trainable_parameters()
 print(
     f"Trainable: {trainable} | total: {total} | Percentage: {trainable / total * 100: .4f}%")
 
+
+def tokenize_and_truncate(text, max_length=150):
+    tokens = tokenizer.encode(text, truncation=True, max_length=max_length)
+    truncated_text = tokenizer.decode(tokens)
+    return truncated_text
+
+
 df = pd.read_csv("datasets/train.csv")
+df["original_text"] = df["original_text"].apply(tokenize_and_truncate)
+df["rewritten_text"] = df["rewritten_text"].apply(tokenize_and_truncate)
 df["token_count"] = df.apply(lambda row: len(tokenizer(
     row["rewrite_prompt"] + row["original_text"] + row["rewritten_text"])["input_ids"]), axis=1)
 df = df.sample(frac=1, random_state=42)
