@@ -24,7 +24,7 @@ tokenizer = AutoTokenizer.from_pretrained(
     model_id,
     token=access_token
 )
-tokenizer.padding_side = "right"
+tokenizer.padding_side = "left"
 
 model = AutoModelForCausalLM.from_pretrained(
     model_id,
@@ -87,8 +87,6 @@ args = TrainingArguments(
     gradient_accumulation_steps=8,
     logging_steps=25,
     num_train_epochs=3,
-    per_device_train_batch_size=1,
-    per_device_eval_batch_size=1,
     report_to="none",
     evaluation_strategy="steps",
     eval_steps=25,
@@ -108,6 +106,7 @@ trainer = SFTTrainer(
     model=model,
     train_dataset=train_dataset,
     eval_dataset=eval_dataset,
+    dataset_batch_size=1,
     formatting_func=formatting_prompts_func,
     peft_config=lora_config,
     args=args
