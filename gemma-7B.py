@@ -15,7 +15,7 @@ bnb_config = BitsAndBytesConfig(
     load_in_4bit=True,
     bnb_4bit_use_double_quant=True,
     bnb_4bit_quant_type="nf4",
-    bnb_4bit_compute_dtype=torch.float16,
+    bnb_4bit_compute_dtype=torch.bfloat16,
     # load_in_8bit=True
 )
 
@@ -23,7 +23,6 @@ model_id = "google/gemma-7b-it"
 access_token = "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"
 tokenizer = AutoTokenizer.from_pretrained(
     model_id,
-    add_eos_token=True,
     token=access_token
 )
 model = AutoModelForCausalLM.from_pretrained(
@@ -31,7 +30,6 @@ model = AutoModelForCausalLM.from_pretrained(
     quantization_config=bnb_config,
     trust_remote_code=True,
     low_cpu_mem_usage=True,
-    torch_dtype=torch.float16,
     device_map="auto",
     token=access_token
 )
@@ -54,7 +52,7 @@ print(
     f"Trainable: {trainable} | total: {total} | Percentage: {trainable / total * 100: .4f}%")
 
 
-def tokenize_and_truncate(text, max_length=150):
+def tokenize_and_truncate(text, max_length=200):
     tokens = tokenizer.encode(text, truncation=True, max_length=max_length)
     truncated_text = tokenizer.decode(tokens)
     return truncated_text
@@ -93,38 +91,29 @@ collator = DataCollatorForCompletionOnlyLM(
 
 args = TrainingArguments(
     output_dir=f"outputs",
-    fp16=True,
     gradient_accumulation_steps=8,
-    logging_steps=100,
-    num_train_epochs=3,
+    fp16=True,
     per_device_train_batch_size=1,
     per_device_eval_batch_size=1,
+    logging_steps=50,
+    num_train_epochs=3,
     report_to="none",
     evaluation_strategy="steps",
-    eval_steps=100,
+    eval_steps=50,
     save_strategy="steps",
-    save_steps=100,
-    save_total_limit=6,
+    save_steps=50,
+    save_total_limit=5,
     overwrite_output_dir=True,
-    load_best_model_at_end=True,
     weight_decay=0.01,
     save_only_model=True,
-    neftune_noise_alpha=1.0
+    neftune_noise_alpha=1.0,
+    learning_rate=2e-4,
+    warmup_steps=50,
+    optim="paged_adamw_8bit",
+    lr_scheduler_type="cosine",
+    # max_steps=10
 )
 
-optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
-gpu_count = torch.cuda.device_count()
-print(f"Number of GPUs: {gpu_count}")
-total_steps = args.num_train_epochs * \
-    int(len(train_dataset) * 1.0 / gpu_count /
-        args.per_device_train_batch_size / args.gradient_accumulation_steps)
-scheduler = get_polynomial_decay_schedule_with_warmup(
-    optimizer,
-    num_warmup_steps=int(total_steps) * 0.05,
-    num_training_steps=total_steps,
-    power=1.5,
-    lr_end=3e-6
-)
 
 tokenizer.pad_token = tokenizer.eos_token
 tokenizer.padding_side = "right"
@@ -139,10 +128,8 @@ trainer = SFTTrainer(
     packing=False,
     formatting_func=formatting_prompts_func,
     peft_config=lora_config,
-    dataset_num_proc=2,
-    dataset_batch_size=100,
-    max_seq_length=1024,
-    optimizers=(optimizer, scheduler),
+    dataset_batch_size=1,
+    max_seq_length=512,
     args=args
 )
 
