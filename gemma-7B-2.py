@@ -53,7 +53,7 @@ print(
     f"Trainable: {trainable} | total: {total} | Percentage: {trainable / total * 100: .4f}%")
 
 
-def tokenize_and_truncate(text, max_length=150):
+def tokenize_and_truncate(text, max_length=200):
     tokens = tokenizer.encode(text, truncation=True, max_length=max_length)
     truncated_text = tokenizer.decode(tokens)
     return truncated_text
@@ -85,19 +85,25 @@ def formatting_prompts_func(example):
 args = TrainingArguments(
     output_dir=f"outputs",
     gradient_accumulation_steps=8,
-    logging_steps=25,
+    learning_rate=2e-4,
+    warmup_steps=50,
+    fp16=True,
+    per_device_train_batch_size=1,
+    per_device_eval_batch_size=1,
+    logging_steps=50,
     num_train_epochs=3,
     report_to="none",
     evaluation_strategy="steps",
-    eval_steps=25,
+    eval_steps=50,
     save_strategy="steps",
-    save_steps=25,
+    save_steps=50,
     save_total_limit=5,
     overwrite_output_dir=True,
     weight_decay=0.01,
     save_only_model=True,
     neftune_noise_alpha=1.0,
-    optim="paged_adamw_8bit"
+    optim="paged_adamw_8bit",
+    lr_scheduler_type="cosine"
 )
 
 torch.cuda.empty_cache()
@@ -108,6 +114,7 @@ trainer = SFTTrainer(
     eval_dataset=eval_dataset,
     dataset_batch_size=1,
     formatting_func=formatting_prompts_func,
+    max_seq_length=512,
     peft_config=lora_config,
     args=args
 )
