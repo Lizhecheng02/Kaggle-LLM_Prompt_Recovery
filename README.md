@@ -22,4 +22,6 @@ export KAGGLE_KEY="your_api_key"
 cd datasets
 kaggle datasets download -d xuanmingzhang777/gemini-dataset-3-8-k
 unzip gemini-dataset-3-8-k.zip
+kaggle competitions download -c llm-prompt-recovery
+unzip llm-prompt-recovery.zip
 ```
