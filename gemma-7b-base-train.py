@@ -14,8 +14,7 @@ from datasets import Dataset
 bnb_config = BitsAndBytesConfig(
     load_in_4bit=True,
     bnb_4bit_quant_type="nf4",
-    bnb_4bit_compute_dtype=torch.bfloat16,
-    # load_in_8bit=True
+    bnb_4bit_compute_dtype=torch.bfloat16
 )
 
 model_id = "google/gemma-7b"
@@ -24,7 +23,8 @@ tokenizer = AutoTokenizer.from_pretrained(
     model_id,
     token=access_token
 )
-tokenizer.padding_side = "left"
+tokenizer.pad_token = tokenizer.eos_token
+tokenizer.padding_side = "right"
 
 model = AutoModelForCausalLM.from_pretrained(
     model_id,
@@ -85,31 +85,33 @@ def formatting_prompts_func(example):
 args = TrainingArguments(
     output_dir=f"outputs",
     gradient_accumulation_steps=8,
-    learning_rate=2e-4,
-    warmup_steps=50,
     fp16=True,
     per_device_train_batch_size=1,
     per_device_eval_batch_size=1,
-    logging_steps=50,
+    logging_steps=100,
     num_train_epochs=3,
     report_to="none",
     evaluation_strategy="steps",
-    eval_steps=50,
+    eval_steps=100,
     save_strategy="steps",
-    save_steps=50,
+    save_steps=100,
     save_total_limit=5,
     overwrite_output_dir=True,
     weight_decay=0.01,
     save_only_model=True,
     neftune_noise_alpha=1.0,
+    learning_rate=1e-4,
+    warmup_steps=50,
     optim="paged_adamw_8bit",
-    lr_scheduler_type="cosine"
+    lr_scheduler_type="cosine",
+    #     max_steps=10
 )
 
 torch.cuda.empty_cache()
 
 trainer = SFTTrainer(
     model=model,
+    # tokenizer=tokenizer,
     train_dataset=train_dataset,
     eval_dataset=eval_dataset,
     dataset_batch_size=1,
