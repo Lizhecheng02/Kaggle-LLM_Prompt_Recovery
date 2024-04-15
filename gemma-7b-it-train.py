@@ -51,8 +51,7 @@ lora_config = LoraConfig(
 lora_model = get_peft_model(model, lora_config)
 
 trainable, total = lora_model.get_nb_trainable_parameters()
-print(
-    f"Trainable: {trainable} | total: {total} | Percentage: {trainable / total * 100: .4f}%")
+print(f"Trainable: {trainable} | total: {total} | Percentage: {trainable / total * 100: .4f}%")
 
 
 def tokenize_and_truncate(text, max_length=200):
@@ -64,8 +63,7 @@ def tokenize_and_truncate(text, max_length=200):
 df = pd.read_csv("datasets/1594prompts.csv")
 df["original_text"] = df["original_text"].apply(tokenize_and_truncate)
 df["rewritten_text"] = df["rewritten_text"].apply(tokenize_and_truncate)
-df["token_count"] = df.apply(lambda row: len(tokenizer(
-    row["rewrite_prompt"] + row["original_text"] + row["rewritten_text"])["input_ids"]), axis=1)
+df["token_count"] = df.apply(lambda row: len(tokenizer(row["rewrite_prompt"] + row["original_text"] + row["rewritten_text"])["input_ids"]), axis=1)
 df = df.sample(frac=1, random_state=42)
 
 train_size = int(0.80 * len(df))
