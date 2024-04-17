@@ -20,12 +20,13 @@ export KAGGLE_KEY="your_api_key"
 #### 2. Download Dataset
 ```bash
 cd datasets
-kaggle datasets download -d xuanmingzhang777/gemini-dataset-3-8-k
-unzip gemini-dataset-3-8-k.zip
 kaggle datasets download -d lizhecheng/lzc-llm-prompt-recovery-dataset
 unzip lzc-llm-prompt-recovery-dataset.zip
 kaggle datasets download -d lizhecheng/llm-prompt-recovery-extra-dataset
-llm-prompt-recovery-extra-dataset.zip
+unzip llm-prompt-recovery-extra-dataset.zip
 kaggle competitions download -c llm-prompt-recovery
 unzip llm-prompt-recovery.zip
 ```
+
+### Train Model
+You can use different ``ipynb`` or ``py`` files to do it. (However, there is a problem with very huge loss while fine-tuning ``gemma-7b``)
